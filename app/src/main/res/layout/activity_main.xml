@@ -1,0 +1,113 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!-- 상단 텍스트뷰 -->
+    <TextView
+        android:id="@+id/positionTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Position: (0, 0)"
+        android:textSize="24sp"
+        android:padding="8dp" />
+
+    <TextView
+        android:id="@+id/magnetometerMagnitudeTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Magnetometer Magnitude: 0"
+        android:textSize="20sp"
+        android:padding="8dp" />
+
+    <TextView
+        android:id="@+id/uncalibratedMagnetometerMagnitudeTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Uncalibrated Magnitude: 0"
+        android:textSize="20sp"
+        android:padding="8dp" />
+
+    <TextView
+        android:id="@+id/magnetometerXYZTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Magnetometer: x=0, y=0, z=0"
+        android:padding="8dp" />
+
+    <TextView
+        android:id="@+id/uncalibratedMagnetometerXYZTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Uncalibrated: x=0, y=0, z=0"
+        android:padding="8dp" />
+
+    <!-- 그래프 뷰 -->
+    <com.example.magneticlocalization.GraphView
+        android:id="@+id/graphView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#f0f0f0" />
+
+    <!-- 방향 버튼 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+        <Button
+            android:id="@+id/buttonUp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="▲" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+        <Button
+            android:id="@+id/buttonLeft"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="◀" />
+        <Button
+            android:id="@+id/buttonPin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pin" />
+        <Button
+            android:id="@+id/buttonRight"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="▶" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+        <Button
+            android:id="@+id/buttonDown"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="▼" />
+    </LinearLayout>
+
+    <!-- 핀 버튼 -->
+<!--    <Button-->
+<!--        android:id="@+id/buttonPin"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="Pin Node" />-->
+
+    <Button
+        android:id="@+id/buttonExport"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Export CSV" />
+</LinearLayout>
