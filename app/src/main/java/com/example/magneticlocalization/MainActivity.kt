@@ -5,12 +5,15 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import java.io.File
 import java.io.FileOutputStream
@@ -20,6 +23,7 @@ import kotlin.math.roundToInt
 class MainActivity : AppCompatActivity(), SensorEventListener {
 
     private var position = Pair(0, 0)
+    private var doAutoPin = false
     private lateinit var graphView: GraphView
 
     private lateinit var sensorManager: SensorManager
@@ -37,6 +41,12 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     private lateinit var magnetometerXYZTextView: TextView
     private lateinit var uncalibratedMagnetometerXYZTextView: TextView
 
+    private val filePickerLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let {
+            importDataFromUri(it)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -47,12 +57,22 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         positionTextView = findViewById(R.id.positionTextView)
         magnetometerMagnitudeTextView = findViewById(R.id.magnetometerMagnitudeTextView)
         uncalibratedMagnetometerMagnitudeTextView = findViewById(R.id.uncalibratedMagnetometerMagnitudeTextView)
-        magnetometerXYZTextView = findViewById(R.id.magnetometerXYZTextView)
-        uncalibratedMagnetometerXYZTextView = findViewById(R.id.uncalibratedMagnetometerXYZTextView)
+//        magnetometerXYZTextView = findViewById(R.id.magnetometerXYZTextView)
+//        uncalibratedMagnetometerXYZTextView = findViewById(R.id.uncalibratedMagnetometerXYZTextView)
 
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
         uncalibratedMagnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED)
+
+        findViewById<CheckBox>(R.id.autoPinCheckBox).setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                doAutoPin = true
+                Toast.makeText(this, "자동 Pin 모드", Toast.LENGTH_SHORT).show()
+            } else {
+                doAutoPin = false
+                Toast.makeText(this, "자동 Pin 모드가 해제됨", Toast.LENGTH_SHORT).show()
+            }
+        }
 
         findViewById<Button>(R.id.buttonLeft).setOnClickListener { movePosition(-1, 0) }
         findViewById<Button>(R.id.buttonRight).setOnClickListener { movePosition(1, 0) }
@@ -60,16 +80,21 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         findViewById<Button>(R.id.buttonDown).setOnClickListener { movePosition(0, -1) }
 
         findViewById<Button>(R.id.buttonPin).setOnClickListener { pinNode() }
+        findViewById<Button>(R.id.buttonImport).setOnClickListener { importDataFromCsv() }
         findViewById<Button>(R.id.buttonExport).setOnClickListener { exportDataToCsv() }
 
 
         graphView.updateCursor(position)
     }
 
-    private fun movePosition(dx: Int, dy: Int) {
+    private fun movePosition(dx: Int, dy: Int, allowAutoPin: Boolean = true) {
         position = Pair(position.first + dx, position.second + dy)
         updatePositionTextView()
         graphView.updateCursor(position)
+
+        if(allowAutoPin && doAutoPin) {
+            pinNode()
+        }
     }
 
     private fun pinNode() {
@@ -122,6 +147,45 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         }
     }
 
+    private fun importDataFromCsv() {
+        filePickerLauncher.launch(arrayOf("text/csv", "application/octet-stream", "*/*"))
+    }
+
+    private fun importDataFromUri(uri: Uri) {
+        try {
+            contentResolver.openInputStream(uri)?.bufferedReader()?.use { reader ->
+                val lines = reader.readLines()
+                if (lines.isNotEmpty()) {
+                    val dataLines = lines.drop(1) // 첫 줄은 헤더
+
+                    // recordedData 초기화 및 CSV 데이터 로드
+//                    recordedData.clear()
+                    for (line in dataLines) {
+                        val values = line.split(",")
+                        if (values.size >= 11) {
+                            val x = values[0].toIntOrNull()
+                            val y = values[1].toIntOrNull()
+                            val magData = values.subList(2, values.size).joinToString(",")
+
+                            if (x != null && y != null) {
+                                recordedData[Pair(x, y)] = magData
+
+                                val magnitude = calculateMagnitude(values.subList(5,8).map { it.toFloat() }.toFloatArray()).toInt()
+                                graphView.addNode(Pair(x, y), magnitude)
+                            }
+                        }
+                    }
+                    showToast("Data imported successfully!")
+                } else {
+                    showToast("The file is empty.")
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            showToast("Failed to import file: ${e.message}")
+        }
+    }
+
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
@@ -137,11 +201,11 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         val uncalibratedMagnitude = calculateMagnitude(uncalibratedMagnetometerValues)
 
         positionTextView.text = "Position: (${position.first}, ${position.second})"
-        magnetometerMagnitudeTextView.text = "Magnetometer Magnitude: ${magnetometerMagnitude.roundToInt()} µT"
-        uncalibratedMagnetometerMagnitudeTextView.text = "Uncalibrated Magnitude: ${uncalibratedMagnitude.roundToInt()} µT"
+        magnetometerMagnitudeTextView.text = "Mag: ${magnetometerMagnitude.roundToInt()} µT"
+        uncalibratedMagnetometerMagnitudeTextView.text = "Uncali: ${uncalibratedMagnitude.roundToInt()} µT"
 
-        magnetometerXYZTextView.text = "Magnetometer: x=${magnetometerValues[0].roundToInt()}, y=${magnetometerValues[1].roundToInt()}, z=${magnetometerValues[2].roundToInt()}"
-        uncalibratedMagnetometerXYZTextView.text = "Uncalibrated: x=${uncalibratedMagnetometerValues[0].roundToInt()}, y=${uncalibratedMagnetometerValues[1].roundToInt()}, z=${uncalibratedMagnetometerValues[2].roundToInt()}"
+//        magnetometerXYZTextView.text = "Magnetometer: x=${magnetometerValues[0].roundToInt()}, y=${magnetometerValues[1].roundToInt()}, z=${magnetometerValues[2].roundToInt()}"
+//        uncalibratedMagnetometerXYZTextView.text = "Uncalibrated: x=${uncalibratedMagnetometerValues[0].roundToInt()}, y=${uncalibratedMagnetometerValues[1].roundToInt()}, z=${uncalibratedMagnetometerValues[2].roundToInt()}"
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
