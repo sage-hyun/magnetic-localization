@@ -14,16 +14,17 @@ import android.widget.CheckBox
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import java.io.File
-import java.io.FileOutputStream
-import kotlin.math.round
 import kotlin.math.roundToInt
 
 class MainActivity : AppCompatActivity(), SensorEventListener {
 
-    private var position = Pair(0, 0)
+    private var position = Pair(7, -13)
     private var doAutoPin = false
+    private var isObstacle = false
+
     private lateinit var graphView: GraphView
 
     private lateinit var sensorManager: SensorManager
@@ -74,6 +75,16 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
             }
         }
 
+        findViewById<CheckBox>(R.id.obstacleCheckBox).setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                isObstacle = true
+                Toast.makeText(this, "장애물 기록 모드", Toast.LENGTH_SHORT).show()
+            } else {
+                isObstacle = false
+                Toast.makeText(this, "장애물 기록 모드가 해제됨", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         findViewById<Button>(R.id.buttonLeft).setOnClickListener { movePosition(-1, 0) }
         findViewById<Button>(R.id.buttonRight).setOnClickListener { movePosition(1, 0) }
         findViewById<Button>(R.id.buttonUp).setOnClickListener { movePosition(0, 1) }
@@ -82,6 +93,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         findViewById<Button>(R.id.buttonPin).setOnClickListener { pinNode() }
         findViewById<Button>(R.id.buttonImport).setOnClickListener { importDataFromCsv() }
         findViewById<Button>(R.id.buttonExport).setOnClickListener { exportDataToCsv() }
+        findViewById<Button>(R.id.buttonDelete).setOnClickListener { showDeleteConfirmationDialog() }
 
 
         graphView.updateCursor(position)
@@ -98,11 +110,37 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     }
 
     private fun pinNode() {
-        val magnitude = calculateMagnitude(uncalibratedMagnetometerValues).toInt()
-        graphView.addNode(position, magnitude)
+        if (!isObstacle) {
+            val magnitude = calculateMagnitude(uncalibratedMagnetometerValues).toInt()
+            graphView.addNode(position, magnitude)
 
-        val currentData = "${magnetometerValues.joinToString(",")},${uncalibratedMagnetometerValues.joinToString(",")}"
-        recordedData[position] = currentData
+            val currentData = "${magnetometerValues.joinToString(",")},${uncalibratedMagnetometerValues.joinToString(",")}"
+            recordedData[position] = currentData
+        } else {
+            graphView.addObstacleNode(position)
+            recordedData[position] = "9999.9,9999.9,9999.9,9999.9,9999.9,9999.9,9999.9,9999.9,9999.9"
+        }
+    }
+
+    private fun showDeleteConfirmationDialog() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("삭제 확인")
+            .setMessage("${position} 데이터를 정말 삭제하시겠습니까?")
+            .setPositiveButton("예") { dialog, _ ->
+                deleteData()
+                dialog.dismiss()
+            }
+            .setNegativeButton("아니오") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .create()
+            .show()
+    }
+
+    private fun deleteData() {
+        recordedData.remove(position)
+        graphView.removeNode(position)
+        showToast("삭제되었습니다.")
     }
 
     private fun exportDataToCsv() {
@@ -169,9 +207,12 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
                             if (x != null && y != null) {
                                 recordedData[Pair(x, y)] = magData
-
-                                val magnitude = calculateMagnitude(values.subList(5,8).map { it.toFloat() }.toFloatArray()).toInt()
-                                graphView.addNode(Pair(x, y), magnitude)
+                                if ((values[5] != "9999.9") && (values[6] != "9999.9") && (values[7] != "9999.9")) {
+                                    val magnitude = calculateMagnitude(values.subList(5,8).map { it.toFloat() }.toFloatArray()).toInt()
+                                    graphView.addNode(Pair(x, y), magnitude)
+                                } else {
+                                    graphView.addObstacleNode(position)
+                                }
                             }
                         }
                     }

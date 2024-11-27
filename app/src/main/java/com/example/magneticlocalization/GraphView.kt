@@ -22,6 +22,8 @@ class GraphView @JvmOverloads constructor(
     private val nodes = mutableListOf<Triple<Pair<Int, Int>, Int, String>>() // 노드: (좌표, magnitude, 텍스트)
     private val edges = mutableListOf<Pair<Pair<Int, Int>, Pair<Int, Int>>>() // 간선
 
+    private val obstacles = mutableListOf<Pair<Int, Int>>() // 노드: (좌표)
+
     private var cursor = Pair(0,0)
 
     private val nodePaint = Paint().apply {
@@ -33,6 +35,11 @@ class GraphView @JvmOverloads constructor(
         color = Color.WHITE
         textSize = 10f
         textAlign = Paint.Align.CENTER
+    }
+
+    private val obstaclePaint = Paint().apply {
+        color = Color.BLACK
+        style = Paint.Style.FILL
     }
 
     private val edgePaint = Paint().apply {
@@ -87,8 +94,22 @@ class GraphView @JvmOverloads constructor(
             edges.add(Pair(lastNode, position)) // 간선 추가
         }
         nodes.add(Triple(position, magnitude, magnitude.toString()))
+        obstacles.removeIf { it == position }
         invalidate()
 //        }
+    }
+
+    fun addObstacleNode(position: Pair<Int, Int>) {
+        obstacles.add(position)
+        nodes.removeIf { it.first == position }
+        invalidate()
+    }
+
+    fun removeNode(position: Pair<Int, Int>) {
+        obstacles.removeIf { it == position }
+        nodes.removeIf { it.first == position }
+        edges.removeIf { (it.first == position) || (it.second == position) }
+        invalidate()
     }
 
     fun updateCursor(position: Pair<Int, Int>) {
@@ -111,13 +132,16 @@ class GraphView @JvmOverloads constructor(
         drawBackground(canvas)
 
         // 간선 그리기
-        edges.forEach { edge ->
-            drawEdge(canvas, edge.first, edge.second)
-        }
+//        edges.forEach { edge ->
+//            drawEdge(canvas, edge.first, edge.second)
+//        }
 
         // 노드 그리기
         nodes.forEach { node ->
             drawNode(canvas, node.first, node.third)
+        }
+        obstacles.forEach { pos ->
+            drawObstacle(canvas, pos)
         }
 
         // 커서 표시
@@ -139,6 +163,11 @@ class GraphView @JvmOverloads constructor(
         val (x, y) = mapToCanvas(position)
         canvas.drawCircle(x, y, 10f, nodePaint) // 노드 원
         canvas.drawText(text, x, y + 3.3f, textPaint) // 노드 텍스트
+    }
+
+    private fun drawObstacle(canvas: Canvas, position: Pair<Int, Int>) {
+        val (x, y) = mapToCanvas(position)
+        canvas.drawRect(x+15f, y+15f, x-15f, y-15f, obstaclePaint)
     }
 
     private fun drawEdge(canvas: Canvas, from: Pair<Int, Int>, to: Pair<Int, Int>) {
