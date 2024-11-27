@@ -11,6 +11,7 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.widget.Button
 import android.widget.CheckBox
+import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -95,8 +96,47 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         findViewById<Button>(R.id.buttonExport).setOnClickListener { exportDataToCsv() }
         findViewById<Button>(R.id.buttonDelete).setOnClickListener { showDeleteConfirmationDialog() }
 
+        positionTextView.setOnClickListener { showPositionDialog() }
 
         graphView.updateCursor(position)
+    }
+
+    private fun showPositionDialog() {
+        // 현재 x, y 값으로 다이얼로그를 표시
+        val x = position.first
+        val y = position.second
+
+        val builder = AlertDialog.Builder(this)
+        val dialogView = layoutInflater.inflate(R.layout.dialog_position, null)
+
+        // EditText를 다이얼로그에 추가
+        val xEditText = dialogView.findViewById<EditText>(R.id.xEditText)
+        val yEditText = dialogView.findViewById<EditText>(R.id.yEditText)
+
+        // 초기값 설정
+        xEditText.setText(x.toString())
+        yEditText.setText(y.toString())
+
+        builder.setView(dialogView)
+            .setTitle("position 이동")
+            .setPositiveButton("OK") { _, _ ->
+                // OK 클릭 시 x, y 값 업데이트
+                val newX = xEditText.text.toString().toIntOrNull()
+                val newY = yEditText.text.toString().toIntOrNull()
+
+                if (newX != null && newY != null) {
+                    position = Pair(newX, newY) // Pair 값 수정
+                    updatePositionTextView() // TextView 업데이트
+                    graphView.updateCursor(position)
+                } else {
+                    Toast.makeText(this, "유효한 값을 입력하세요.", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("취소") { dialog, _ ->
+                dialog.dismiss() // 취소 시 다이얼로그 닫기
+            }
+
+        builder.create().show()
     }
 
     private fun movePosition(dx: Int, dy: Int, allowAutoPin: Boolean = true) {
