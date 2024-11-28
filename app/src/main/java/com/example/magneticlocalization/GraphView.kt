@@ -88,6 +88,12 @@ class GraphView @JvmOverloads constructor(
     init {
         // 배경 이미지 로드
         backgroundBitmap = BitmapFactory.decodeResource(resources, R.drawable.floor_plan_1540) // 이미지 리소스 이름에 맞게 수정
+
+        backgroundBitmap?.let { bitmap ->
+            // 모눈 한칸의 길이 계산
+//            gapLength = bitmap.width / 153.79f  // 154.0f 이어야 하는데 평면도가 조금 잘린듯 하다
+            gapLength = bitmap.height / 66.0f
+        }
     }
 
     fun getSettings(): Pair<Float, Float> {
@@ -145,8 +151,6 @@ class GraphView @JvmOverloads constructor(
         canvas.scale(scaleFactor, scaleFactor, width / 2f, height / 2f)
         canvas.translate(offsetX, offsetY)
 
-//        gapLength = 0.014428435f * height
-
         // 배경 이미지 그리기
         drawBackground(canvas)
 
@@ -174,9 +178,6 @@ class GraphView @JvmOverloads constructor(
         backgroundBitmap?.let { bitmap ->
             val (x, y) = mapToCanvas(Pair(0,0))
             canvas.drawBitmap(bitmap, x-correctionLength, y-correctionLength, null) // 노드가 모눈 안에 들어오도록 보정
-
-//            gapLength = bitmap.width / 153.79f  // 154.0f 이어야 하는데 평면도가 조금 잘린듯 하다
-            gapLength = bitmap.height / 66.0f
         }
     }
 
