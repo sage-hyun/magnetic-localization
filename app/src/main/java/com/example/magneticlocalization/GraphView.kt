@@ -112,6 +112,12 @@ class GraphView @JvmOverloads constructor(
         invalidate()
     }
 
+    fun clearNodes() {
+        obstacles.clear()
+        nodes.clear()
+        edges.clear()
+    }
+
     fun updateCursor(position: Pair<Int, Int>) {
         cursor = position
 

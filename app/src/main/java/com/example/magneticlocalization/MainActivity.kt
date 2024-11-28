@@ -237,7 +237,9 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                     val dataLines = lines.drop(1) // 첫 줄은 헤더
 
                     // recordedData 초기화 및 CSV 데이터 로드
-//                    recordedData.clear()
+                    recordedData.clear()
+                    graphView.clearNodes()
+
                     for (line in dataLines) {
                         val values = line.split(",")
                         if (values.size >= 11) {
@@ -251,7 +253,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                                     val magnitude = calculateMagnitude(values.subList(5,8).map { it.toFloat() }.toFloatArray()).toInt()
                                     graphView.addNode(Pair(x, y), magnitude)
                                 } else {
-                                    graphView.addObstacleNode(position)
+                                    graphView.addObstacleNode(Pair(x, y))
                                 }
                             }
                         }
