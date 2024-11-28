@@ -96,9 +96,46 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         findViewById<Button>(R.id.buttonExport).setOnClickListener { exportDataToCsv() }
         findViewById<Button>(R.id.buttonDelete).setOnClickListener { showDeleteConfirmationDialog() }
 
+        findViewById<Button>(R.id.buttonSettings).setOnClickListener { showSettingsDialog() }
+
         positionTextView.setOnClickListener { showPositionDialog() }
 
         graphView.updateCursor(position)
+    }
+
+    private fun showSettingsDialog() {
+        // 현재 x, y 값으로 다이얼로그를 표시
+        val (gapLength, correctionLength) = graphView.getSettings()
+
+        val builder = AlertDialog.Builder(this)
+        val dialogView = layoutInflater.inflate(R.layout.dialog_settings, null)
+
+        // EditText를 다이얼로그에 추가
+        val gapEditText = dialogView.findViewById<EditText>(R.id.gapEditText)
+        val corrEditText = dialogView.findViewById<EditText>(R.id.correctionEditText)
+
+        // 초기값 설정
+        gapEditText.setText(gapLength.toString())
+        corrEditText.setText(correctionLength.toString())
+
+        builder.setView(dialogView)
+            .setTitle("position 이동")
+            .setPositiveButton("OK") { _, _ ->
+                // OK 클릭 시 x, y 값 업데이트
+                val newGap = gapEditText.text.toString().toFloatOrNull()
+                val newCorr = corrEditText.text.toString().toFloatOrNull()
+
+                if (newGap != null && newCorr != null) {
+                    graphView.editSettings(newGap, newCorr)
+                } else {
+                    Toast.makeText(this, "유효한 값을 입력하세요.", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("취소") { dialog, _ ->
+                dialog.dismiss() // 취소 시 다이얼로그 닫기
+            }
+
+        builder.create().show()
     }
 
     private fun showPositionDialog() {

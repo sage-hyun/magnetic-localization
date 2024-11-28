@@ -25,6 +25,9 @@ class GraphView @JvmOverloads constructor(
     private val obstacles = mutableListOf<Pair<Int, Int>>() // 노드: (좌표)
 
     private var cursor = Pair(0,0)
+    
+    private var gapLength = 15.02f
+    private var correctionLength = 15f
 
     private val nodePaint = Paint().apply {
         color = Color.BLUE
@@ -87,6 +90,14 @@ class GraphView @JvmOverloads constructor(
         backgroundBitmap = BitmapFactory.decodeResource(resources, R.drawable.floor_plan_1540) // 이미지 리소스 이름에 맞게 수정
     }
 
+    fun getSettings(): Pair<Float, Float> {
+        return Pair(gapLength, correctionLength)
+    }
+    fun editSettings(newGapLength: Float, newCorrectionLength: Float) {
+        gapLength = newGapLength
+        correctionLength = newCorrectionLength
+    }
+
     fun addNode(position: Pair<Int, Int>, magnitude: Int) {
 //        if (!nodes.any { it.first == position }) {
         if (nodes.isNotEmpty()) {
@@ -121,8 +132,8 @@ class GraphView @JvmOverloads constructor(
     fun updateCursor(position: Pair<Int, Int>) {
         cursor = position
 
-        offsetX = -position.first * 15.02f
-        offsetY = position.second * 15.02f
+        offsetX = -position.first * gapLength
+        offsetY = position.second * gapLength
         invalidate()
     }
 
@@ -160,7 +171,7 @@ class GraphView @JvmOverloads constructor(
     private fun drawBackground(canvas: Canvas) {
         backgroundBitmap?.let { bitmap ->
             val (x, y) = mapToCanvas(Pair(0,0))
-            canvas.drawBitmap(bitmap, x-15f, y-15f, null) // 노드가 모눈 안에 들어오도록 보정
+            canvas.drawBitmap(bitmap, x-correctionLength, y-correctionLength, null) // 노드가 모눈 안에 들어오도록 보정
         }
     }
 
@@ -189,10 +200,10 @@ class GraphView @JvmOverloads constructor(
     }
 
     private fun mapToCanvas(position: Pair<Int, Int>): Pair<Float, Float> {
-//        val canvasX = width / 2f + position.first * 15.02f
-//        val canvasY = height / 2f - position.second * 15.02f
-        val canvasX = width / 2f + position.first * 15.02f * 2f + offsetX
-        val canvasY = height / 2f - position.second * 15.02f * 2f  + offsetY
+//        val canvasX = width / 2f + position.first * gapLength
+//        val canvasY = height / 2f - position.second * gapLength
+        val canvasX = width / 2f + position.first * gapLength * 2f + offsetX
+        val canvasY = height / 2f - position.second * gapLength * 2f  + offsetY
         return Pair(canvasX, canvasY)
     }
 
