@@ -96,7 +96,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         findViewById<Button>(R.id.buttonExport).setOnClickListener { exportDataToCsv() }
         findViewById<Button>(R.id.buttonDelete).setOnClickListener { showDeleteConfirmationDialog() }
 
-        findViewById<Button>(R.id.buttonSettings).setOnClickListener { showSettingsDialog() }
+//        findViewById<Button>(R.id.buttonSettings).setOnClickListener { showSettingsDialog() }
 
         positionTextView.setOnClickListener { showPositionDialog() }
 
@@ -119,7 +119,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         corrEditText.setText(correctionLength.toString())
 
         builder.setView(dialogView)
-            .setTitle("position 이동")
+            .setTitle("Settings")
             .setPositiveButton("OK") { _, _ ->
                 // OK 클릭 시 x, y 값 업데이트
                 val newGap = gapEditText.text.toString().toFloatOrNull()
